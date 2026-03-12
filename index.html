@@ -1,0 +1,2116 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM-Powered ETL Pipeline · Sujith SA</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0c;
+            --panel: rgba(255, 255, 255, 0.03);
+            --panel-border: rgba(255, 255, 255, 0.08);
+            --glass: rgba(15, 15, 20, 0.6);
+            --ink: #f1f5f9;
+            --muted: #94a3b8;
+            --dim: #64748b;
+            --emerald: #10b981;
+            --emerald-glow: rgba(16, 185, 129, 0.15);
+            --blue: #3b82f6;
+            --blue-glow: rgba(59, 130, 246, 0.15);
+            --orange: #f97316;
+            --orange-glow: rgba(249, 115, 22, 0.15);
+            --red: #ef4444;
+            --sans: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+            --r: 12px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0
+        }
+
+        html {
+            scroll-behavior: smooth
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--ink);
+            font-family: var(--sans);
+            -webkit-font-smoothing: antialiased;
+            line-height: 1.6
+        }
+
+        /* UTILS */
+        .glass {
+            background: var(--panel);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--r);
+        }
+
+        .glow-emerald {
+            box-shadow: 0 0 20px var(--emerald-glow)
+        }
+
+        .glow-blue {
+            box-shadow: 0 0 20px var(--blue-glow)
+        }
+
+        .glow-orange {
+            box-shadow: 0 0 20px var(--orange-glow)
+        }
+
+
+        /* TICKER */
+        .ticker {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--panel-border);
+            padding: 12px 0;
+            overflow: hidden;
+            position: sticky;
+            top: 0;
+            z-index: 200
+        }
+
+        .ticker-inner {
+            display: flex;
+            width: max-content;
+            animation: run 45s linear infinite
+        }
+
+        .ticker-inner:hover {
+            animation-play-state: paused
+        }
+
+        .ti {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--muted);
+            padding: 0 28px;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            letter-spacing: 0.05em
+        }
+
+        .ti b {
+            color: var(--emerald);
+            font-weight: 600;
+            text-shadow: 0 0 8px var(--emerald-glow)
+        }
+
+        .ti::after {
+            content: '◆';
+            font-size: 6px;
+            color: var(--panel-border);
+            margin-left: 28px
+        }
+
+        @keyframes run {
+            to {
+                transform: translateX(-50%)
+            }
+        }
+
+        /* HERO */
+        /* HERO */
+        .hero {
+            background:
+                radial-gradient(circle at 0% 0%, rgba(16, 185, 129, 0.08), transparent 50%),
+                radial-gradient(circle at 100% 0%, rgba(59, 130, 246, 0.08), transparent 50%),
+                radial-gradient(circle at 100% 100%, rgba(249, 115, 22, 0.08), transparent 50%),
+                radial-gradient(circle at 0% 100%, rgba(59, 130, 246, 0.08), transparent 50%);
+            border-bottom: 1px solid var(--panel-border);
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 0;
+            padding: 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3C%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            opacity: 0.03;
+            pointer-events: none;
+        }
+
+        .hero-left {
+            padding: 30px 40px;
+            border-right: 1px solid var(--panel-border)
+        }
+
+        .byline {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px
+        }
+
+        .byline-text {
+            font-family: var(--mono);
+            font-size: 10px;
+            color: var(--dim);
+            text-transform: uppercase;
+            letter-spacing: .15em
+        }
+
+        .sujith {
+            display: inline-flex;
+            gap: 4px;
+            cursor: default;
+            font-family: var(--mono);
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: .2em;
+        }
+
+        .sujith span {
+            display: inline-block;
+            color: var(--ink);
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .sujith:hover span {
+            color: var(--emerald)
+        }
+
+        .sujith span:hover {
+            transform: translateY(-4px) scale(1.2);
+            color: var(--orange) !important;
+            text-shadow: 0 0 10px var(--orange-glow);
+        }
+
+        .pulse {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--emerald);
+            position: relative;
+            box-shadow: 0 0 8px var(--emerald)
+        }
+
+        .pulse::after {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            border: 1px solid var(--emerald);
+            animation: ping 2s ease-out infinite
+        }
+
+        /* Automatic Bouncing */
+        @keyframes letter-bounce {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-10px);
+                color: var(--emerald);
+                text-shadow: 0 0 10px var(--emerald-glow);
+            }
+        }
+
+        .sujith span {
+            animation: letter-bounce 3s ease-in-out infinite;
+            animation-delay: calc(var(--i) * 0.15s);
+        }
+
+        .sujith:hover span {
+            animation-play-state: paused;
+        }
+
+
+        .hero-title {
+            font-size: clamp(32px, 6vw, 70px);
+            font-weight: 900;
+            letter-spacing: -.04em;
+            line-height: 0.85;
+            margin-bottom: 15px;
+            color: #fff
+        }
+
+        .hero-title em {
+            font-style: italic;
+            font-weight: 300;
+            color: var(--muted);
+            display: block;
+            margin-top: 2px
+        }
+
+        .hero-sub {
+            font-size: clamp(16px, 1.5vw, 20px);
+            font-weight: 300;
+            color: var(--muted);
+            letter-spacing: -.01em;
+            margin-bottom: 30px;
+            max-width: 550px
+        }
+
+
+        .hero-desc {
+            font-size: 15px;
+            line-height: 1.6;
+            color: var(--muted);
+            max-width: 600px;
+            margin-bottom: 24px
+        }
+
+        .hero-desc strong {
+            color: var(--ink);
+            font-weight: 600
+        }
+
+
+        .hero-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 48px
+        }
+
+        .pill {
+            font-family: var(--mono);
+            font-size: 11px;
+            padding: 6px 14px;
+            border: 1px solid var(--panel-border);
+            color: var(--muted);
+            background: var(--panel);
+            border-radius: 100px;
+            font-weight: 500;
+            transition: var(--transition)
+        }
+
+        .pill:hover {
+            border-color: var(--dim);
+            color: var(--ink);
+            background: rgba(255, 255, 255, 0.06)
+        }
+
+        .pill.hi {
+            border-color: var(--blue-glow);
+            color: var(--blue);
+            background: var(--blue-glow)
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 16px
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: var(--mono);
+            font-size: 12px;
+            font-weight: 700;
+            padding: 14px 28px;
+            border-radius: var(--r);
+            text-decoration: none;
+            transition: var(--transition);
+            border: 1px solid transparent;
+            letter-spacing: .05em;
+            text-transform: uppercase
+        }
+
+        .btn-primary {
+            background: var(--ink);
+            color: var(--bg)
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4)
+        }
+
+        .btn-outline {
+            border-color: var(--panel-border);
+            color: var(--muted);
+            background: var(--panel);
+            backdrop-filter: blur(8px)
+        }
+
+        .btn-outline:hover {
+            border-color: var(--dim);
+            color: var(--ink);
+            background: rgba(255, 255, 255, 0.08)
+        }
+
+        /* hero right stat tower */
+        .hero-right {
+            display: flex;
+            flex-direction: column;
+            background: rgba(0, 0, 0, 0.15);
+            min-width: 260px
+        }
+
+        .hstat {
+            padding: 24px 32px;
+            border-bottom: 1px solid var(--panel-border);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            transition: var(--transition)
+        }
+
+        .hstat:hover {
+            background: var(--panel)
+        }
+
+        .hstat-val {
+            font-family: var(--mono);
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: -.03em;
+            display: block;
+            line-height: 1
+        }
+
+        .hstat-val.g {
+            color: var(--emerald);
+            text-shadow: 0 0 10px var(--emerald-glow)
+        }
+
+        .hstat-val.b {
+            color: var(--blue);
+            text-shadow: 0 0 10px var(--blue-glow)
+        }
+
+        .hstat-val.o {
+            color: var(--orange);
+            text-shadow: 0 0 10px var(--orange-glow)
+        }
+
+        .hstat-lbl {
+            font-size: 10px;
+            color: var(--muted);
+            display: block;
+            margin-top: 8px;
+            text-transform: uppercase;
+            letter-spacing: .12em;
+            font-weight: 600
+        }
+
+        .hstat-note {
+            font-family: var(--mono);
+            font-size: 10px;
+            color: var(--dim);
+            display: block;
+            margin-top: 4px
+        }
+
+        /* hero bottom stat bar */
+        .hero-bar {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            background: rgba(0, 0, 0, 0.4);
+            border-bottom: 1px solid var(--panel-border)
+        }
+
+        .hb {
+            padding: 24px;
+            border-right: 1px solid var(--panel-border);
+            text-align: center;
+            transition: var(--transition)
+        }
+
+        .hb:hover {
+            background: var(--panel)
+        }
+
+        .hb-v {
+            font-family: var(--mono);
+            font-size: 16px;
+            font-weight: 700;
+            display: block
+        }
+
+        .hb-v.g {
+            color: var(--emerald)
+        }
+
+        .hb-l {
+            font-size: 9px;
+            color: var(--dim);
+            text-transform: uppercase;
+            letter-spacing: .1em;
+            font-weight: 700;
+            display: block;
+            margin-top: 4px
+        }
+
+
+        /* MAIN */
+        main {
+            padding: 32px 60px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px
+        }
+
+        .row2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px
+        }
+
+        .row3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px
+        }
+
+        .slabel {
+            display: inline-block;
+            font-family: var(--mono);
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--emerald);
+            margin: 30px 0 15px;
+            padding: 4px 10px;
+            background: var(--emerald-glow);
+            border-radius: 20px
+        }
+
+        /* card base */
+        .c {
+            background: var(--panel);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--r);
+            padding: 24px;
+            position: relative;
+            transition: var(--transition);
+            overflow: hidden;
+            backdrop-filter: blur(12px)
+        }
+
+        .c:hover {
+            border-color: var(--dim);
+            background: rgba(255, 255, 255, 0.05)
+        }
+
+        .c-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap
+        }
+
+        .c-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #fff;
+            line-height: 1.4;
+            letter-spacing: -0.02em
+        }
+
+        .c-sub {
+            font-size: 13px;
+            color: var(--muted);
+            margin-top: 2px
+        }
+
+        .badge {
+            font-family: var(--mono);
+            font-size: 10px;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 100px;
+            letter-spacing: .08em;
+            flex-shrink: 0;
+            text-transform: uppercase
+        }
+
+        .badge-g {
+            color: var(--emerald);
+            background: var(--emerald-glow);
+            border: 1px solid rgba(16, 185, 129, 0.3)
+        }
+
+        .badge-b {
+            color: var(--blue);
+            background: var(--blue-glow);
+            border: 1px solid rgba(59, 130, 246, 0.3)
+        }
+
+        .badge-o {
+            color: var(--orange);
+            background: var(--orange-glow);
+            border: 1px solid rgba(249, 115, 22, 0.3)
+        }
+
+        /* SYSTEM CONSOLE */
+        .console {
+            background: #000;
+            border: 1px solid var(--panel-border);
+            border-radius: var(--r);
+            font-family: var(--mono);
+            font-size: 10px;
+            overflow: hidden;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .console-header {
+            background: #111;
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--panel-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .console-dots {
+            display: flex;
+            gap: 6px;
+        }
+
+        .console-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            opacity: 0.5;
+        }
+
+        .console-body {
+            padding: 12px;
+            color: #888;
+            height: 100px;
+            overflow-y: hidden;
+        }
+
+        .console-line {
+            margin-bottom: 4px;
+            display: flex;
+            gap: 10px;
+            opacity: 0;
+            animation: console-fade 0.5s forwards;
+        }
+
+        @keyframes console-fade {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .console-line b {
+            color: var(--emerald);
+        }
+
+        .console-line.err b {
+            color: var(--red);
+        }
+
+        .console-line.info b {
+            color: var(--blue);
+        }
+
+
+        /* SHOWCASE */
+        .showcase-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        @media (max-width: 768px) {
+            .showcase-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .showcase-item {
+            padding: 8px;
+            border-radius: var(--r);
+            position: relative;
+            overflow: hidden;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--panel-border);
+        }
+
+        .showcase-item img {
+            width: 100%;
+            height: auto;
+            border-radius: 6px;
+            border: 1px solid var(--panel-border);
+            transition: var(--transition);
+            object-fit: cover;
+            aspect-ratio: 16/10;
+        }
+
+        .showcase-item:hover img {
+            transform: scale(1.02);
+        }
+
+        .showcase-caption {
+            font-size: 10px;
+            color: var(--muted);
+            margin-top: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+
+        /* Refined Bounce */
+        @keyframes letter-bounce {
+
+            0%,
+            100% {
+                transform: translateY(0);
+                filter: brightness(1);
+            }
+
+            50% {
+                transform: translateY(-15px);
+                color: var(--emerald);
+                filter: brightness(1.5);
+                text-shadow: 0 0 20px var(--emerald-glow);
+            }
+        }
+
+        .pitch-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1px;
+            background: var(--panel-border);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--r);
+            overflow: hidden
+        }
+
+        .pitch {
+            background: var(--panel);
+            padding: 24px 20px;
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition)
+        }
+
+        .pitch:hover {
+            background: rgba(255, 255, 255, 0.05)
+        }
+
+        .pitch::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            opacity: 0.6
+        }
+
+        .pitch.p1::before {
+            background: linear-gradient(90deg, var(--blue), #60a5fa)
+        }
+
+        .pitch.p2::before {
+            background: linear-gradient(90deg, var(--emerald), #34d399)
+        }
+
+        .pitch.p3::before {
+            background: linear-gradient(90deg, var(--orange), #fb923c)
+        }
+
+        .pitch-num {
+            font-family: var(--mono);
+            font-size: 10px;
+            color: var(--dim);
+            font-weight: 700;
+            letter-spacing: .2em;
+            margin-bottom: 20px;
+            display: block
+        }
+
+        .pitch-icon {
+            font-size: 24px;
+            margin-bottom: 12px;
+            display: block;
+            filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.1))
+        }
+
+        .pitch-h {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -.02em;
+            margin-bottom: 8px;
+            color: #fff
+        }
+
+        .pitch-p {
+            font-size: 13px;
+            color: var(--muted);
+            line-height: 1.5
+        }
+
+        .pitch-p code {
+            font-family: var(--mono);
+            font-size: 12px;
+            background: rgba(255, 255, 255, 0.06);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--ink)
+        }
+
+
+        /* ARCHITECTURE */
+        .arch-wrap {
+            overflow-x: auto;
+            padding-bottom: 4px
+        }
+
+        .arch {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            min-width: 800px
+        }
+
+        .anode {
+            background: var(--panel);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--r);
+            padding: 16px 20px;
+            position: relative;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 16px
+        }
+
+        .anode:last-child {
+            border-right: none
+        }
+
+        .anode:hover {
+            border-color: var(--dim)
+        }
+
+        .anode-num {
+            font-family: var(--mono);
+            font-size: 9px;
+            color: var(--dim);
+            font-weight: 700;
+            position: absolute;
+            top: 12px;
+            left: 16px;
+            letter-spacing: 0.1em
+        }
+
+        .anode-icon {
+            font-size: 28px;
+            filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.1));
+            flex-shrink: 0
+        }
+
+        .anode-name {
+            font-size: 13px;
+            font-weight: 700;
+            text-align: left;
+            letter-spacing: -.01em;
+            line-height: 1.3
+        }
+
+        .anode-file {
+            font-family: var(--mono);
+            font-size: 10px;
+            color: var(--blue);
+            text-align: left;
+            background: var(--blue-glow);
+            padding: 2px 8px;
+            border-radius: 4px;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            margin-top: 4px;
+            display: inline-block
+        }
+
+        .anode-desc {
+            font-size: 12px;
+            color: var(--muted);
+            text-align: left;
+            line-height: 1.5;
+            margin-top: 8px
+        }
+
+        .anode.hi {
+            border-color: var(--blue);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.1)
+        }
+
+        .anode.hi .anode-name {
+            color: var(--blue);
+            text-shadow: 0 0 8px var(--blue-glow)
+        }
+
+        .aarch-arrow {
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+            color: var(--panel-border);
+            font-size: 20px;
+            padding: 0 8px;
+            margin-top: 0
+        }
+
+
+        /* BEFORE / AFTER */
+        .ba-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px
+        }
+
+        .ba-table thead th {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .12em;
+            padding: 0 24px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--panel-border)
+        }
+
+        .ba-table thead th.h-bad {
+            color: var(--red)
+        }
+
+        .ba-table thead th.h-good {
+            color: var(--emerald)
+        }
+
+        .ba-table thead th.h-type {
+            color: var(--dim)
+        }
+
+        .ba-table tbody tr {
+            transition: var(--transition)
+        }
+
+        .ba-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.02)
+        }
+
+        .ba-table td {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--panel-border)
+        }
+
+        .ba-table tr:last-child td {
+            border-bottom: none
+        }
+
+        .type-chip {
+            font-size: 12px;
+            color: var(--dim);
+            font-weight: 500
+        }
+
+        .dirty {
+            font-family: var(--mono);
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--red);
+            background: rgba(239, 68, 68, 0.1);
+            padding: 4px 12px;
+            border-radius: 6px;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            display: inline-block
+        }
+
+        .clean {
+            font-family: var(--mono);
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--emerald);
+            background: var(--emerald-glow);
+            padding: 4px 12px;
+            border-radius: 6px;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            display: inline-block;
+            box-shadow: 0 0 10px var(--emerald-glow)
+        }
+
+
+        /* QUALITY BARS */
+        .q-rows {
+            display: flex;
+            flex-direction: column;
+            gap: 32px
+        }
+
+        .q-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 8px
+        }
+
+        .q-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--ink)
+        }
+
+        .q-nums {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-family: var(--mono);
+            font-size: 13px
+        }
+
+        .q-old {
+            color: var(--red);
+            text-decoration: line-through;
+            opacity: 0.6
+        }
+
+        .q-new {
+            color: var(--emerald);
+            font-weight: 800;
+            font-size: 15px;
+            text-shadow: 0 0 8px var(--emerald-glow)
+        }
+
+        .q-tag {
+            background: var(--emerald-glow);
+            color: var(--emerald);
+            font-size: 10px;
+            font-weight: 800;
+            padding: 2px 10px;
+            border-radius: 100px;
+            border: 1px solid rgba(16, 185, 129, 0.3)
+        }
+
+        .q-track {
+            height: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 100px;
+            overflow: hidden;
+            border: 1px solid var(--panel-border);
+            display: flex;
+            align-items: center
+        }
+
+        .q-fill {
+            height: 100%;
+            border-radius: 100px;
+            transition: width 1.6s cubic-bezier(.22, 1, .36, 1) .1s;
+            position: relative;
+            box-shadow: 0 0 15px var(--emerald-glow)
+        }
+
+        .q-fill::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 0 100px 100px 0
+        }
+
+
+        /* PIPELINE */
+        .pipe {
+            display: flex;
+            flex-direction: column;
+            gap: 8px
+        }
+
+        .prow {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: var(--panel);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--r);
+            transition: var(--transition);
+            cursor: default
+        }
+
+        .prow:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateX(4px)
+        }
+
+        .picon {
+            font-size: 18px;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg);
+            border-radius: 8px;
+            border: 1px solid var(--panel-border)
+        }
+
+        .pname {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--ink)
+        }
+
+        .pmeta {
+            font-size: 11px;
+            color: var(--dim);
+            margin-top: 2px
+        }
+
+        .pmeta .f {
+            color: var(--blue)
+        }
+
+        .pstatus {
+            font-family: var(--mono);
+            font-size: 10px;
+            font-weight: 800;
+            padding: 5px 14px;
+            border-radius: 100px;
+            flex-shrink: 0;
+            text-transform: uppercase;
+            letter-spacing: 0.05em
+        }
+
+        .ps-done {
+            color: var(--emerald);
+            background: var(--emerald-glow);
+            border: 1px solid rgba(16, 185, 129, 0.2)
+        }
+
+        .ps-live {
+            color: var(--blue);
+            background: var(--blue-glow);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            animation: fade 1.8s ease infinite
+        }
+
+        @keyframes fade {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: .4
+            }
+        }
+
+        /* DAG */
+        .dag {
+            display: flex;
+            flex-direction: column;
+            gap: 8px
+        }
+
+        .drow {
+            display: flex;
+            align-items: center;
+            padding: 10px 16px;
+            background: var(--panel);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--r);
+            gap: 12px;
+            transition: var(--transition);
+            cursor: default
+        }
+
+        .drow:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateX(4px)
+        }
+
+        .dn {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--dim);
+            width: 24px;
+            flex-shrink: 0
+        }
+
+        .dname {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--ink);
+            flex: 1
+        }
+
+        .dtype {
+            font-size: 11px;
+            color: var(--dim);
+            text-transform: lowercase;
+            opacity: 0.8
+        }
+
+        .ds {
+            font-family: var(--mono);
+            font-size: 9px;
+            font-weight: 800;
+            padding: 3px 12px;
+            border-radius: 100px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em
+        }
+
+        .ds-ok {
+            color: var(--emerald);
+            background: var(--emerald-glow)
+        }
+
+        .ds-run {
+            color: var(--blue);
+            background: var(--blue-glow);
+            animation: fade 1.6s ease infinite
+        }
+
+        .ds-q {
+            color: var(--dim);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--panel-border)
+        }
+
+
+        /* TESTS */
+        .tests {
+            display: flex;
+            flex-direction: column;
+            gap: 8px
+        }
+
+        .trow {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 16px;
+            background: var(--panel);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--r);
+            font-family: var(--mono);
+            font-size: 12px;
+            transition: var(--transition);
+            cursor: default
+        }
+
+        .trow:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateX(4px)
+        }
+
+        .tick {
+            width: 16px;
+            height: 16px;
+            background: var(--emerald);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 900;
+            color: var(--bg);
+            flex-shrink: 0;
+            box-shadow: 0 0 8px var(--emerald-glow)
+        }
+
+        .tname {
+            flex: 1;
+            color: var(--muted)
+        }
+
+        .tfile {
+            font-size: 10px;
+            color: var(--dim);
+            opacity: 0.7
+        }
+
+        .tpass {
+            color: var(--emerald);
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em
+        }
+
+
+
+        /* WHY */
+        .why-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1px;
+            background: var(--panel-border);
+            border: 1px solid var(--panel-border);
+            border-radius: var(--r);
+            overflow: hidden
+        }
+
+        .why {
+            background: var(--panel);
+            padding: 24px 20px;
+            transition: var(--transition);
+            border-radius: var(--r);
+            border: 1px solid var(--panel-border)
+        }
+
+        .why:hover {
+            background: rgba(255, 255, 255, 0.04)
+        }
+
+        .why-label {
+            font-family: var(--mono);
+            font-size: 9px;
+            font-weight: 800;
+            color: var(--dim);
+            text-transform: uppercase;
+            letter-spacing: .15em;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px
+        }
+
+        .why-label span {
+            display: inline-block;
+            width: 16px;
+            height: 1px;
+            background: var(--panel-border)
+        }
+
+        .why-h {
+            font-size: 17px;
+            font-weight: 700;
+            letter-spacing: -.02em;
+            margin-bottom: 8px;
+            color: #fff
+        }
+
+        .why-p {
+            font-size: 13px;
+            color: var(--muted);
+            line-height: 1.6
+        }
+
+        .why-p code {
+            font-family: var(--mono);
+            font-size: 11px;
+            background: rgba(255, 255, 255, 0.06);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--ink)
+        }
+
+
+
+        /* FOOTER */
+        footer {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid var(--panel-border);
+            padding: 30px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-top: 20px
+        }
+
+        .fl {
+            font-size: 13px;
+            color: var(--dim)
+        }
+
+        .fl a {
+            color: var(--ink);
+            text-decoration: none;
+            font-weight: 600;
+            transition: var(--transition)
+        }
+
+        .fl a:hover {
+            color: var(--emerald);
+            text-shadow: 0 0 10px var(--emerald-glow)
+        }
+
+        .flinks {
+            display: flex;
+            gap: 24px
+        }
+
+        .flinks a {
+            font-size: 12px;
+            color: var(--dim);
+            text-decoration: none;
+            transition: var(--transition);
+            font-family: var(--mono);
+            letter-spacing: 0.02em
+        }
+
+        .flinks a:hover {
+            color: var(--ink)
+        }
+
+        .fstatus {
+            display: flex;
+            gap: 16px
+        }
+
+        .fs {
+            font-family: var(--mono);
+            font-size: 10px;
+            color: var(--dim);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600
+        }
+
+        .fdot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--emerald);
+            box-shadow: 0 0 8px var(--emerald)
+        }
+
+
+
+        @media(max-width:960px) {
+            .hero {
+                grid-template-columns: 1fr
+            }
+
+            .hero-right {
+                width: 100%;
+                flex-direction: row;
+                flex-wrap: wrap;
+                border-top: 1px solid var(--panel-border)
+            }
+
+            .hstat {
+                flex: 1;
+                min-width: 140px;
+                border-right: 1px solid var(--panel-border)
+            }
+
+            .hero-bar {
+                grid-template-columns: repeat(3, 1fr)
+            }
+
+            .hero-left {
+                padding: 40px 24px
+            }
+
+            main {
+                padding: 24px 20px
+            }
+
+            .pitch-grid,
+            .why-grid,
+            .row2,
+            .row3 {
+                grid-template-columns: 1fr
+            }
+
+            footer {
+                padding: 40px 24px
+            }
+        }
+
+        /* Animations */
+        .reveal-el {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .reveal-el.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .hero-left {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-left::after {
+            content: '';
+            position: absolute;
+            top: -100px;
+            right: -100px;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, var(--emerald-glow), transparent 70%);
+            z-index: -1;
+            filter: blur(80px);
+            opacity: 0.3;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- TICKER -->
+    <div class="ticker">
+        <div class="ticker-inner">
+            <span class="ti">Regex <b>ELIMINATED</b></span>
+            <span class="ti">Llama 3.1 via Groq <b>ACTIVE</b></span>
+            <span class="ti">6 Data Flaws Fixed Per Record <b>ZERO RULES WRITTEN</b></span>
+            <span class="ti">Name Casing <b>6% → 92%</b></span>
+            <span class="ti">Valid State Codes <b>0% → 100%</b></span>
+            <span class="ti">Clean Whitespace <b>70% → 94%</b></span>
+            <span class="ti">Airflow DAG @daily <b>RUNNING</b></span>
+            <span class="ti">ON CONFLICT DO UPDATE <b>IDEMPOTENT</b></span>
+            <span class="ti">pytest 9 / 9 <b>PASSING</b></span>
+            <span class="ti">Docker Stack <b>&lt; 2 MIN STARTUP</b></span>
+            <span class="ti">LLM Failure Fallback <b>RESILIENT</b></span>
+            <span class="ti">GitHub Actions CI <b>PASSING</b></span>
+            <span class="ti">Regex <b>ELIMINATED</b></span>
+            <span class="ti">Llama 3.1 via Groq <b>ACTIVE</b></span>
+            <span class="ti">6 Data Flaws Fixed Per Record <b>ZERO RULES WRITTEN</b></span>
+            <span class="ti">Name Casing <b>6% → 92%</b></span>
+            <span class="ti">Valid State Codes <b>0% → 100%</b></span>
+            <span class="ti">Clean Whitespace <b>70% → 94%</b></span>
+            <span class="ti">Airflow DAG @daily <b>RUNNING</b></span>
+            <span class="ti">ON CONFLICT DO UPDATE <b>IDEMPOTENT</b></span>
+            <span class="ti">pytest 9 / 9 <b>PASSING</b></span>
+            <span class="ti">Docker Stack <b>&lt; 2 MIN STARTUP</b></span>
+            <span class="ti">LLM Failure Fallback <b>RESILIENT</b></span>
+            <span class="ti">GitHub Actions CI <b>PASSING</b></span>
+        </div>
+    </div>
+
+    <!-- HERO -->
+    <div class="hero">
+        <div class="hero-left">
+
+            <!-- Interactive name -->
+            <div class="byline">
+                <span class="pulse"></span>
+                <span class="byline-text">Built by</span>
+                <span class="sujith" id="sujith-name" title="That's me!">
+                    <span style="--i:1">S</span><span style="--i:2">U</span><span style="--i:3">J</span><span
+                        style="--i:4">I</span><span style="--i:5">T</span><span style="--i:6">H</span>
+                </span>
+
+                <span class="byline-text">· 2024</span>
+            </div>
+
+            <h1 class="hero-title">LLM-Powered<br><em>ETL Pipeline</em></h1>
+            <p class="hero-sub">Intelligent Data Transformation<br>with Llama 3.1 &amp; Apache Airflow</p>
+            <p class="hero-desc">
+                Traditional ETL pipelines rely on complex, fragile <strong>Regular Expressions</strong> to clean data.
+                But what happens when the data is completely unpredictable?<br><br>
+                This project replaces legacy cleaning entirely with an <strong>AI-driven parser (Llama 3.1 via
+                    Groq)</strong>
+                — it understands context, corrects malformed records, and normalises data with human-like reasoning,
+                all orchestrated inside a robust, idempotent <strong>Apache Airflow</strong> DAG.
+            </p>
+
+            <!-- Professional System Console -->
+            <div class="console glass">
+                <div class="console-header">
+                    <div class="console-dots">
+                        <div class="console-dot" style="background:#ff5f56"></div>
+                        <div class="console-dot" style="background:#ffbd2e"></div>
+                        <div class="console-dot" style="background:#27c93f"></div>
+                    </div>
+                    <div style="font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:1px">Pipeline
+                        Console</div>
+                </div>
+                <div class="console-body" id="console-stream">
+                    <!-- Lines will be added by JS -->
+                </div>
+            </div>
+
+            <div class="hero-pills">
+
+                <span class="pill hi">Llama 3.1</span>
+                <span class="pill hi">Groq API</span>
+                <span class="pill hi">Apache Airflow 2.7.2</span>
+                <span class="pill hi">PostgreSQL 15</span>
+                <span class="pill">Python 3.11</span>
+                <span class="pill">Docker</span>
+                <span class="pill">GitHub Actions</span>
+                <span class="pill">Pytest</span>
+            </div>
+            <div class="hero-actions">
+                <a href="https://github.com/sujithsa1/etl-llm-pipeline" target="_blank" class="btn btn-primary">↗ View
+                    on GitHub</a>
+                <a href="https://github.com/sujithsa1" target="_blank" class="btn btn-outline">Other Projects →</a>
+            </div>
+        </div>
+
+        <div class="hero-right">
+            <div class="hstat">
+                <span class="hstat-val b">500+</span>
+                <span class="hstat-lbl">Lines of Regex Eliminated</span>
+                <span class="hstat-note">Replaced by 1 LLM prompt</span>
+            </div>
+            <div class="hstat">
+                <span class="hstat-val g">9 / 9</span>
+                <span class="hstat-lbl">pytest Passing</span>
+                <span class="hstat-note">test_llm_cleaner.py</span>
+            </div>
+            <div class="hstat">
+                <span class="hstat-val o">3×</span>
+                <span class="hstat-lbl">LLM Retry Backoff</span>
+                <span class="hstat-note">Exponential · never crashes</span>
+            </div>
+            <div class="hstat" style="border-bottom:none">
+                <span class="hstat-val g">+86pp</span>
+                <span class="hstat-lbl">Name Format Lift</span>
+                <span class="hstat-note">6% → 92% accuracy</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- STAT BAR -->
+    <div class="hero-bar">
+        <div class="hb"><span class="hb-v">Llama 3.1</span><span class="hb-l">LLM via Groq</span></div>
+        <div class="hb"><span class="hb-v g">0% → 100%</span><span class="hb-l">State Codes Fixed</span></div>
+        <div class="hb"><span class="hb-v g">+86pp</span><span class="hb-l">Name Improvement</span></div>
+        <div class="hb"><span class="hb-v g">+24pp</span><span class="hb-l">Whitespace Cleaned</span></div>
+        <div class="hb"><span class="hb-v">@daily</span><span class="hb-l">Airflow Schedule</span></div>
+        <div class="hb"><span class="hb-v g">PASS</span><span class="hb-l">CI / CD Status</span></div>
+    </div>
+
+    <main>
+
+        <!-- 1. PITCH -->
+        <div>
+            <div class="slabel">Why This Project Exists</div>
+            <div class="pitch-grid">
+                <div class="pitch p1">
+                    <span class="pitch-num">01 / 03</span>
+                    <span class="pitch-icon">🧠</span>
+                    <div class="pitch-h">AI-Driven Cleaning</div>
+                    <p class="pitch-p">Uses <strong>Llama 3.1</strong> to handle ambiguous normalisation that regex
+                        simply cannot catch. What would take 500 lines of complex regex is replaced by a single
+                        intelligent prompt. Adapts to new data flaws instantly — no rule updates needed.</p>
+                </div>
+                <div class="pitch p2">
+                    <span class="pitch-num">02 / 03</span>
+                    <span class="pitch-icon">🔁</span>
+                    <div class="pitch-h">Idempotent Loads</div>
+                    <p class="pitch-p">Pipeline safely reruns without duplicating records. Uses Postgres
+                        <code>ON CONFLICT DO UPDATE</code> — running the DAG 100 times yields the exact same database
+                        state as running it once. Production-safe by design.</p>
+                </div>
+                <div class="pitch p3">
+                    <span class="pitch-num">03 / 03</span>
+                    <span class="pitch-icon">🐳</span>
+                    <div class="pitch-h">100% Containerised</div>
+                    <p class="pitch-p">Full stack — Airflow, Postgres, all scripts — launches in under 2 minutes with
+                        Docker. <code>make start</code> is all you need. Zero environment setup headaches. Fully
+                        reproducible on any machine.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. ARCHITECTURE -->
+        <div>
+            <div class="slabel">Architecture · Raw CSV → Analytics-Ready PostgreSQL</div>
+            <div class="c" style="padding:0;overflow:hidden">
+                <div
+                    style="padding:20px 26px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+                    <div>
+                        <div class="c-title">End-to-End Pipeline Flow</div>
+                        <div class="c-sub">generate_data.py → Airflow DAG → llm_cleaner.py → db_loader.py →
+                            generate_report.py</div>
+                    </div>
+                    <span class="badge badge-b">Apache Airflow Orchestrated</span>
+                </div>
+                <div class="arch-wrap" style="padding:24px 0 0">
+                    <div class="arch" style="border-top:1px solid var(--line)">
+                        <div class="anode">
+                            <span class="anode-num">01</span>
+                            <span class="anode-icon">📄</span>
+                            <span class="anode-name">Raw Messy Data</span>
+                            <span class="anode-file">generate_data.py</span>
+                            <span class="anode-desc">Synthetic corrupt<br>customer CSV records</span>
+                        </div>
+                        <div class="aarch-arrow">→</div>
+                        <div class="anode hi">
+                            <span class="anode-num">02</span>
+                            <span class="anode-icon">🌀</span>
+                            <span class="anode-name">Apache Airflow</span>
+                            <span class="anode-file">etl_pipeline_dag.py</span>
+                            <span class="anode-desc">Orchestrator<br>@daily · 7 tasks</span>
+                        </div>
+                        <div class="aarch-arrow">→</div>
+                        <div class="anode">
+                            <span class="anode-num">03</span>
+                            <span class="anode-icon">🧠</span>
+                            <span class="anode-name">Llama 3.1</span>
+                            <span class="anode-file">llm_cleaner.py</span>
+                            <span class="anode-desc">Groq API · 3× retry<br>exponential backoff</span>
+                        </div>
+                        <div class="aarch-arrow">→</div>
+                        <div class="anode">
+                            <span class="anode-num">04</span>
+                            <span class="anode-icon">🐘</span>
+                            <span class="anode-name">PostgreSQL 15</span>
+                            <span class="anode-file">db_loader.py</span>
+                            <span class="anode-desc">ON CONFLICT<br>DO UPDATE</span>
+                        </div>
+                        <div class="aarch-arrow">→</div>
+                        <div class="anode">
+                            <span class="anode-num">05</span>
+                            <span class="anode-icon">📊</span>
+                            <span class="anode-name">Quality Report</span>
+                            <span class="anode-file">generate_report.py</span>
+                            <span class="anode-desc">Accuracy metrics<br>Data Warehouse ready</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. BEFORE / AFTER -->
+        <div>
+            <div class="slabel">The Before &amp; After · LLM Magic · No Hardcoded Rules</div>
+            <div class="c">
+                <div class="c-head">
+                    <div>
+                        <div class="c-title">Exactly how Llama 3.1 interprets and fixes broken customer records</div>
+                        <div class="c-sub">Every transformation happens via a single LLM prompt — zero regex, zero
+                            hardcoded rules</div>
+                    </div>
+                    <span class="badge badge-g">AI Cleaned · Zero Regex</span>
+                </div>
+                <table class="ba-table">
+                    <thead>
+                        <tr>
+                            <th class="h-type">The Problem</th>
+                            <th class="h-bad">✗ Dirty Raw Data</th>
+                            <th class="h-good">✓ AI Cleaned Output</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="type-chip">Ambiguous Names</span></td>
+                            <td><span class="dirty">JANE smith</span></td>
+                            <td><span class="clean">Jane Smith</span></td>
+                        </tr>
+                        <tr>
+                            <td><span class="type-chip">Broken Whitespace</span></td>
+                            <td><span class="dirty">··bob·</span></td>
+                            <td><span class="clean">Bob</span></td>
+                        </tr>
+                        <tr>
+                            <td><span class="type-chip">Invalid Emails</span></td>
+                            <td><span class="dirty">INVALID_EMAIL</span></td>
+                            <td><span class="clean">invalid@unknown.com</span></td>
+                        </tr>
+                        <tr>
+                            <td><span class="type-chip">Malformed Zip Codes</span></td>
+                            <td><span class="dirty">··77001 / (empty)</span></td>
+                            <td><span class="clean">77001 / 00000</span></td>
+                        </tr>
+                        <tr>
+                            <td><span class="type-chip">Raw Phone Numbers</span></td>
+                            <td><span class="dirty">9541234567</span></td>
+                            <td><span class="clean">(954) 123-4567</span></td>
+                        </tr>
+                        <tr>
+                            <td><span class="type-chip">Lowercase Cities</span></td>
+                            <td><span class="dirty">new york</span></td>
+                            <td><span class="clean">New York</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 4. QUALITY + PIPELINE -->
+        <div class="row2">
+            <div class="c">
+                <div class="c-head">
+                    <div>
+                        <div class="c-title">Proven Data Quality Results</div>
+                        <div class="c-sub">50 highly corrupt records routed through the LLM</div>
+                    </div>
+                    <span class="badge badge-g">All Metrics Improved</span>
+                </div>
+                <div class="q-rows">
+                    <div>
+                        <div class="q-top">
+                            <span class="q-name">Proper Case Names</span>
+                            <span class="q-nums"><span class="q-old">6%</span><span
+                                    style="color:var(--dim)">→</span><span class="q-new">92%</span><span
+                                    class="q-tag">+86pp</span></span>
+                        </div>
+                        <div class="q-track">
+                            <div class="q-fill" data-w="92"
+                                style="width:0%;background:linear-gradient(90deg,#166534,#22c55e)"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="q-top">
+                            <span class="q-name">Valid State Codes</span>
+                            <span class="q-nums"><span class="q-old">0%</span><span
+                                    style="color:var(--dim)">→</span><span class="q-new">100%</span><span
+                                    class="q-tag">+100pp</span></span>
+                        </div>
+                        <div class="q-track">
+                            <div class="q-fill" data-w="100"
+                                style="width:0%;background:linear-gradient(90deg,#166534,#22c55e)"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="q-top">
+                            <span class="q-name">Clean Whitespace</span>
+                            <span class="q-nums"><span class="q-old">70%</span><span
+                                    style="color:var(--dim)">→</span><span class="q-new">94%</span><span
+                                    class="q-tag">+24pp</span></span>
+                        </div>
+                        <div class="q-track">
+                            <div class="q-fill" data-w="94"
+                                style="width:0%;background:linear-gradient(90deg,#166534,#22c55e)"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="c">
+                <div class="c-head">
+                    <div>
+                        <div class="c-title">Pipeline Status</div>
+                        <div class="c-sub">All systems go</div>
+                    </div>
+                    <span class="badge badge-b">Airflow @daily</span>
+                </div>
+                <div class="pipe">
+                    <div class="prow">
+                        <div class="picon">📄</div>
+                        <div class="pbody">
+                            <span class="pname">Raw CSV Ingested</span>
+                            <span class="pmeta"><span class="f">generate_data.py</span><span>·</span><span>Synthetic
+                                    messy customer records</span></span>
+                        </div>
+                        <span class="pstatus ps-done">Ingested</span>
+                    </div>
+                    <div class="prow">
+                        <div class="picon">🌀</div>
+                        <div class="pbody">
+                            <span class="pname">Airflow DAG Triggered</span>
+                            <span class="pmeta"><span class="f">etl_pipeline_dag.py</span><span>·</span><span>@daily · 7
+                                    tasks</span></span>
+                        </div>
+                        <span class="pstatus ps-done">Orchestrating</span>
+                    </div>
+                    <div class="prow">
+                        <div class="picon">🧠</div>
+                        <div class="pbody">
+                            <span class="pname">Llama 3.1 Cleaning via Groq</span>
+                            <span class="pmeta"><span class="f">llm_cleaner.py</span><span>·</span><span>3× retry ·
+                                    exponential backoff</span></span>
+                        </div>
+                        <span class="pstatus ps-live">Running</span>
+                    </div>
+                    <div class="prow">
+                        <div class="picon">🐘</div>
+                        <div class="pbody">
+                            <span class="pname">Idempotent Load to PostgreSQL</span>
+                            <span class="pmeta"><span class="f">db_loader.py</span><span>·</span><span>ON CONFLICT DO
+                                    UPDATE</span></span>
+                        </div>
+                        <span class="pstatus ps-done">Loaded</span>
+                    </div>
+                    <div class="prow">
+                        <div class="picon">📊</div>
+                        <div class="pbody">
+                            <span class="pname">Quality Report Generated</span>
+                            <span class="pmeta"><span class="f">generate_report.py</span><span>·</span><span>Accuracy
+                                    metrics calculated</span></span>
+                        </div>
+                        <span class="pstatus ps-done">Complete</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. DAG + TESTS -->
+        <div class="row2">
+            <div class="c">
+                <div class="c-head">
+                    <div>
+                        <div class="c-title">Airflow DAG · Task Breakdown</div>
+                        <div class="c-sub">etl_pipeline_dag.py · 7 PythonOperator tasks</div>
+                    </div>
+                    <span class="badge badge-b">@daily</span>
+                </div>
+                <div class="dag">
+                    <div class="drow"><span class="dn">01</span><span class="dname">generate_data</span><span
+                            class="dtype">PythonOperator</span><span class="ds ds-ok">success</span></div>
+                    <div class="drow"><span class="dn">02</span><span class="dname">validate_input</span><span
+                            class="dtype">PythonOperator</span><span class="ds ds-ok">success</span></div>
+                    <div class="drow"><span class="dn">03</span><span class="dname">llm_clean_records</span><span
+                            class="dtype">PythonOperator</span><span class="ds ds-run">running</span></div>
+                    <div class="drow"><span class="dn">04</span><span class="dname">validate_output</span><span
+                            class="dtype">PythonOperator</span><span class="ds ds-q">queued</span></div>
+                    <div class="drow"><span class="dn">05</span><span class="dname">load_to_postgres</span><span
+                            class="dtype">PythonOperator</span><span class="ds ds-q">queued</span></div>
+                    <div class="drow"><span class="dn">06</span><span class="dname">generate_report</span><span
+                            class="dtype">PythonOperator</span><span class="ds ds-q">queued</span></div>
+                    <div class="drow"><span class="dn">07</span><span class="dname">notify_complete</span><span
+                            class="dtype">PythonOperator</span><span class="ds ds-q">queued</span></div>
+                </div>
+            </div>
+
+            <div class="c">
+                <div class="c-head">
+                    <div>
+                        <div class="c-title">Test Suite · Pytest Unit Tests</div>
+                        <div class="c-sub">tests/test_llm_cleaner.py · Data integrity checks</div>
+                    </div>
+                    <span class="badge badge-g">9 / 9 Passing</span>
+                </div>
+                <div class="tests">
+                    <div class="trow">
+                        <div class="tick">✓</div><span class="tname">test_name_normalisation</span><span
+                            class="tfile">llm_cleaner.py</span><span class="tpass">pass</span>
+                    </div>
+                    <div class="trow">
+                        <div class="tick">✓</div><span class="tname">test_email_fallback</span><span
+                            class="tfile">llm_cleaner.py</span><span class="tpass">pass</span>
+                    </div>
+                    <div class="trow">
+                        <div class="tick">✓</div><span class="tname">test_phone_formatting</span><span
+                            class="tfile">llm_cleaner.py</span><span class="tpass">pass</span>
+                    </div>
+                    <div class="trow">
+                        <div class="tick">✓</div><span class="tname">test_zip_cleaning</span><span
+                            class="tfile">llm_cleaner.py</span><span class="tpass">pass</span>
+                    </div>
+                    <div class="trow">
+                        <div class="tick">✓</div><span class="tname">test_state_code_fix</span><span
+                            class="tfile">llm_cleaner.py</span><span class="tpass">pass</span>
+                    </div>
+                    <div class="trow">
+                        <div class="tick">✓</div><span class="tname">test_llm_retry_logic</span><span
+                            class="tfile">llm_cleaner.py</span><span class="tpass">pass</span>
+                    </div>
+                    <div class="trow">
+                        <div class="tick">✓</div><span class="tname">test_idempotent_load</span><span
+                            class="tfile">db_loader.py</span><span class="tpass">pass</span>
+                    </div>
+                    <div class="trow">
+                        <div class="tick">✓</div><span class="tname">test_dag_structure</span><span
+                            class="tfile">etl_pipeline_dag.py</span><span class="tpass">pass</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+
+        <!-- SYSTEM SHOWCASE -->
+        <div class="c reveal-el">
+            <div class="c-head">
+                <div>
+                    <div class="c-title">System Showcase</div>
+                    <div class="c-sub">Visual proof of the production-ready Airflow orchestration</div>
+                </div>
+                <div class="badge badge-b">LIVE PREVIEW</div>
+            </div>
+
+            <div class="showcase-grid">
+                <div class="showcase-item glass">
+                    <img src="assets/media__1773286908844.png" alt="Airflow DAG List">
+                    <div class="showcase-caption">DAG List Interface</div>
+                </div>
+                <div class="showcase-item glass">
+                    <img src="assets/media__1773286909368.png" alt="Airflow Graph">
+                    <div class="showcase-caption">Pipeline Topology</div>
+                </div>
+                <div class="showcase-item glass">
+                    <img src="assets/media__1773286909360.png" alt="Data Quality Report">
+                    <div class="showcase-caption">Quality Audit Log</div>
+                </div>
+
+
+            </div>
+        </div>
+
+        <!-- 6. WHY -->
+        <div>
+            <div class="slabel">Why This Architecture · For Engineering Managers</div>
+            <div class="why-grid">
+                <div class="why">
+                    <div class="why-label"><span></span>Reason 01</div>
+                    <div class="why-h">LLM over Rule-Engines</div>
+                    <p class="why-p">Rules break when upstream systems change. LLMs adapt. What would take 500 lines of
+                        complex regex is replaced by a single intelligent prompt. When a new data flaw appears, there is
+                        no code to update — the model handles it.</p>
+                </div>
+                <div class="why">
+                    <div class="why-label"><span></span>Reason 02</div>
+                    <div class="why-h">Resilience Built-In</div>
+                    <p class="why-p">The pipeline features exponential backoff and 3× retries for every LLM network
+                        call. If Groq goes down entirely, it gracefully falls back to raw data — the pipeline
+                        <em>never</em> hard-crashes. Designed for production from day one.</p>
+                </div>
+                <div class="why">
+                    <div class="why-label"><span></span>Reason 03</div>
+                    <div class="why-h">Idempotency Guaranteed</div>
+                    <p class="why-p">Using Postgres <code>ON CONFLICT DO UPDATE</code>, running the DAG 100 times yields
+                        the exact same state as running it once. Reprocessing a day's data, recovering from failures,
+                        backfilling — all safe, all predictable.</p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <footer>
+        <span class="fl">LLM-Powered ETL Pipeline · Built by <a href="https://github.com/sujithsa1"
+                target="_blank">Sujith SA</a></span>
+        <div class="fstatus">
+
+            <span class="fs"><span class="fdot"></span>Airflow ACTIVE</span>
+            <span class="fs"><span class="fdot"></span>Postgres LIVE</span>
+            <span class="fs"><span class="fdot"></span>CI PASSING</span>
+        </div>
+    </footer>
+
+    <script>
+        // Console Stream Logic
+        const consoleBody = document.getElementById('console-stream');
+        const logs = [
+            { t: 'INFO', m: 'Initializing Airflow DAG: etl_llm_pipeline', c: 'info' },
+            { t: 'INFO', m: 'Connecting to PostgreSQL... Success.', c: 'info' },
+            { t: 'INFO', m: 'Task: generate_raw_data started.', c: 'info' },
+            { t: 'INFO', m: 'Ingesting 50 records from source_a.csv', c: 'info' },
+            { t: 'CLEAN', m: 'Llama 3.1: Parsing record #12... Success.', b: true },
+            { t: 'CLEAN', m: 'Llama 3.1: Normalising whitespaces... Success.', b: true },
+            { t: 'INFO', m: 'Task: load_to_postgres started.', c: 'info' },
+            { t: 'WARN', m: 'LLM Latency > 2.4s. Retrying...', c: 'o' },
+            { t: 'CLEAN', m: 'Llama 3.1: Record #43 cleaned.', b: true },
+            { t: 'INFO', m: 'Exporting Data Quality Report...', c: 'info' },
+            { t: 'DONE', m: 'Pipeline cycle complete.', c: 'info' }
+        ];
+
+        let logIdx = 0;
+        function addLog() {
+            const log = logs[logIdx % logs.length];
+            const el = document.createElement('div');
+            el.className = `console-line ${log.c || ''}`;
+            el.innerHTML = `<span>[${new Date().toLocaleTimeString()}]</span> <b>${log.t}:</b> ${log.m}`;
+            consoleBody.appendChild(el);
+            if (consoleBody.children.length > 5) consoleBody.removeChild(consoleBody.firstChild);
+            logIdx++;
+            setTimeout(addLog, 2000 + Math.random() * 2000);
+        }
+        addLog();
+
+        // Quality bars on scroll
+        const bars = document.querySelectorAll('.q-fill[data-w]');
+        const observerOptions = { threshold: 0.2, rootMargin: '0px 0px -50px 0px' };
+
+        const io = new IntersectionObserver(entries => {
+            entries.forEach(e => {
+                if (e.isIntersecting) {
+                    setTimeout(() => {
+                        e.target.style.width = e.target.dataset.w + '%';
+                        e.target.parentElement.parentElement.parentElement.classList.add('reveal');
+                    }, 200);
+                    io.unobserve(e.target);
+                }
+            });
+        }, observerOptions);
+        bars.forEach(b => io.observe(b));
+
+        // General Reveal on scroll
+        const revealObserver = new IntersectionObserver(entries => {
+            entries.forEach(e => {
+                if (e.isIntersecting) {
+                    e.target.classList.add('active');
+                    revealObserver.unobserve(e.target);
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.c, .pitch, .why, .anode').forEach(el => {
+            el.classList.add('reveal-el');
+            revealObserver.observe(el);
+        });
+
+        // Interactive SUJITH letters
+        const letters = document.querySelectorAll('#sujith-name span');
+        const colors = ['var(--emerald)', 'var(--blue)', 'var(--orange)', 'var(--emerald)', 'var(--blue)', 'var(--orange)'];
+
+        letters.forEach((l, i) => {
+            // Ripple on hover - paused during hover
+            l.addEventListener('mouseenter', () => {
+                l.style.animationPlayState = 'paused';
+                [i - 1, i + 1].forEach(j => {
+                    if (letters[j]) {
+                        letters[j].style.transform = 'translateY(-4px) scale(1.1)';
+                        letters[j].style.color = colors[j];
+                        setTimeout(() => {
+                            letters[j].style.transform = '';
+                            letters[j].style.color = '';
+                        }, 300);
+                    }
+                });
+            });
+            l.addEventListener('mouseleave', () => {
+                l.style.animationPlayState = 'running';
+            });
+        });
+
+
+    </script>
+</body>
+
+</html>
